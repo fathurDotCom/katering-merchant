@@ -12,14 +12,22 @@ class MasterController extends Controller
 {
     public function companies(Request $request)
     {
-        $company = Company::where('uuid', $request->company_uuid)->select('country_uuid', 'province_uuid', 'city_uuid', 'district_uuid', 'subdistrict_uuid', 'url', 'facebook', 'instagram', 'youtube', 'twitter')->first();
+        $company = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->where('uuid', $request->company_uuid)
+        ->select('country_uuid', 'province_uuid', 'city_uuid', 'district_uuid', 'subdistrict_uuid', 'url', 'facebook', 'instagram', 'youtube', 'twitter')
+        ->first();
 
         return $company;
     }
 
     public function categories(Request $request)
     {
-        $categories = Category::where('company_uuid', $request->company_uuid)->orderBy('name')->get();
+        $categories = Category::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('company_uuid', auth()->user()->company_uuid);
+        })
+        ->where('company_uuid', $request->company_uuid)->orderBy('name')->get();
         
         $html = '<option></option>';
         foreach($categories as $item) {
@@ -43,7 +51,10 @@ class MasterController extends Controller
 
     public function products(Request $request)
     {
-        $products = Product::where('company_uuid', $request->company_uuid)->orderBy('name')->get();
+        $products = Product::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('company_uuid', auth()->user()->company_uuid);
+        })
+        ->where('company_uuid', $request->company_uuid)->orderBy('name')->get();
         
         $html = '<option></option>';
         foreach($products as $item) {

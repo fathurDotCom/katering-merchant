@@ -36,7 +36,7 @@ function appLoader() {
 function appSuccess(response) {
     Swal.fire({
         title: "Success",
-        html: response.message,
+        text: response.message,
         icon: "success"
     });
 }

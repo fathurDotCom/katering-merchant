@@ -38,7 +38,7 @@
 						<div class="header-brand">
 
 							<a href="index.html">
-								<img alt="Logo" src="/assets/media/logos/default-dark.svg" class="h-25px h-lg-25px" />
+								<h1 class="text-white">{{ env('APP_NAME') }}</h1>
 							</a>
 
 							<div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-minimize" data-kt-toggle="true" data-kt-toggle-state="active" data-kt-toggle-target="body" data-kt-toggle-name="aside-minimize">
@@ -167,7 +167,7 @@
 											<div class="aside-user d-flex align-items-sm-center justify-content-center py-5">
 									
 												<div class="symbol symbol-35px">
-													<img src="/assets/media/avatars/300-1.jpg" height="50px" alt="" />
+													<img src="{{ auth()->user()->photo ? "/uploads/users/photos/".auth()->user()->photo : '/assets/media/avatars/300-1.jpg' }}" height="50px" alt="" />
 												</div>
 									
 												<div class="aside-user-info flex-row-fluid flex-wrap ms-5">

@@ -59,6 +59,8 @@ Route::middleware(['auth', 'role:superadmin|merchant'])->group(function() {
         Route::get('edit/{uuid}', [OrderController::class, 'edit'])->name('order.edit');
         Route::post('update/{uuid}', [OrderController::class, 'update'])->name('order.update');
         Route::delete('delete/{uuid}', [OrderController::class, 'destroy'])->name('order.delete');
+        
+        Route::get('invoice/{uuid}', [OrderController::class, 'invoice'])->name('order.invoice');
     });
 
     Route::prefix('products')->group(function() {

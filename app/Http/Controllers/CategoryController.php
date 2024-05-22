@@ -24,7 +24,11 @@ class CategoryController extends Controller
     }
 
     protected function json(Request $request) {
-        $data = Category::with('company')->orderByDesc('created_at')->get();
+        $data = Category::with('company')
+        ->when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('company_uuid', auth()->user()->company_uuid);
+        })
+        ->orderByDesc('created_at')->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -57,7 +61,10 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
 
         return view('category.create', compact('companies'));
     }
@@ -114,9 +121,12 @@ class CategoryController extends Controller
     public function edit($uuid)
     {
         $data = Category::where('uuid', $uuid)->first();
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
 
-        return view('category::edit', compact('data', 'companies'));
+        return view('category.edit', compact('data', 'companies'));
     }
 
     /**

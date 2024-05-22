@@ -27,7 +27,11 @@ class OrderController extends Controller
     }
 
     protected function json() {
-        $data = Order::with('company', 'customer')->orderByDesc('created_at')->get();
+        $data = Order::with('company', 'customer')
+        ->when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('company_uuid', auth()->user()->company_uuid);
+        })
+        ->orderByDesc('created_at')->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -36,6 +40,10 @@ class OrderController extends Controller
             })
             ->editColumn('action', function ($data) {
                 $actionButton = '
+                <a href='.route("order.invoice", ['uuid' => $data->uuid]).' data-bs-toggle="tooltip" data-bs-placement="top" title="invoice">
+                    <i class="ki-duotone ki-document text-primary"><span class="path1"></span><span class="path2"></span></i>
+                </a>
+
                 <a href='.route("order.edit", ['uuid' => $data->uuid]).' data-bs-toggle="tooltip" data-bs-placement="top" title="edit">
                     <i class="ki-duotone ki-pencil fs-5 text-warning"><span class="path1"></span><span class="path2"></span></i>
                 </a>
@@ -54,7 +62,10 @@ class OrderController extends Controller
      */
     public function create()
     {
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
 
         return view('order.create', compact('companies'));
     }
@@ -92,7 +103,7 @@ class OrderController extends Controller
                 'customer_uuid' => $params['customer_uuid'],
                 'order_number' => rand(100000, 999999),
                 'invoice' => 'inv-' . date('YmdHis') . '-' . rand(1000, 9999),
-                'amount' => 0,
+                'amount' => $params['amount'],
                 'paid' => $params['paid'],
                 'transaction_type' => $params['transaction_type'],
                 'description' => $params['description'],
@@ -101,11 +112,9 @@ class OrderController extends Controller
 
             $order = Order::create($orderParams);
             
-            $orderParams['amount'] = 0;
             foreach($request->product_uuid as $key => $item) {
 
                 $product = Product::where('uuid', $item)->first();
-                $orderParams['amount'] = $orderParams['amount'] + $product->price;
                 
                 $temp = [
                     'order_uuid' => $order->uuid,
@@ -116,8 +125,6 @@ class OrderController extends Controller
                 
                 $detail = OrderDetail::create($temp);
             }
-
-            $order->update(['amount' => $orderParams['amount']]);
             
             DB::commit();
 
@@ -146,7 +153,10 @@ class OrderController extends Controller
     {
         $data = Order::where('uuid', $uuid)->first();
         $detail = OrderDetail::where('order_uuid', $uuid)->get();
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
         $customers = User::role('user')->get();
         $products = Product::where('company_uuid', $data->company_uuid)->orderBy('name')->get();
 
@@ -186,13 +196,12 @@ class OrderController extends Controller
                 'customer_uuid' => $params['customer_uuid'],
                 'order_number' => rand(100000, 999999),
                 'invoice' => 'inv-' . date('YmdHis') . '-' . rand(1000, 9999),
-                'amount' => 0,
+                'amount' => $params['amount'],
                 'paid' => $params['paid'],
                 'transaction_type' => $params['transaction_type'],
                 'description' => $params['description'],
             ];
             
-            $orderParams['amount'] = 0;
             $detailParams = [];
             
             $filteredArray = array_filter($request->detail_order_uuid, function($value) {
@@ -204,7 +213,6 @@ class OrderController extends Controller
             foreach($request->product_uuid as $key => $item) {
 
                 $product = Product::where('uuid', $item)->first();
-                $orderParams['amount'] = $orderParams['amount'] + $product->price;
                 
                 
                 $search =  [
@@ -272,5 +280,13 @@ class OrderController extends Controller
                 'message' => $th->getMessage(),
             ], 500);
         }
+    }
+    
+    public function invoice($uuid)
+    {
+        $order = Order::where('uuid', $uuid)->first();
+        $details = OrderDetail::where('order_uuid', $order->uuid)->get();
+
+        return view('order.invoice', compact('order', 'details'));
     }
 }

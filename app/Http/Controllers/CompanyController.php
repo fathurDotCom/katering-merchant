@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Subdistrict;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -115,7 +116,11 @@ class CompanyController extends Controller
             $params['logo_dark'] = upload($params['logo_dark'], public_path('uploads/companies/logos/'));
             $params['favicon'] = upload($params['favicon'], public_path('uploads/companies/logos/'));
             
-            Company::create($params);
+            $company = Company::create($params);
+
+            User::where('uuid', auth()->user()->uuid)->update([
+                'company_uuid' => $company->uuid,
+            ]);
             
             DB::commit();
 

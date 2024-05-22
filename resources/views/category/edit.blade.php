@@ -50,7 +50,7 @@
                                         <select class="form-select @error('company_uuid') is-invalid @enderror" name="company_uuid" id="company_uuid" data-control="select2" data-placeholder="Select an option">
                                             <option></option>
                                             @foreach ($companies as $item)
-                                                <option value="{{ $item->uuid . '#' . $item->service->uuid }}" {{ $data->company_uuid ? 'selected' : null }}>{{ $item->name . ' (' . $item->service->name . ')' }}</option>
+                                                <option value="{{ $item->uuid }}" {{ $data->company_uuid ? 'selected' : null }}>{{ $item->name }}</option>
                                             @endforeach
                                         </select>
                                         @error('company_uuid')

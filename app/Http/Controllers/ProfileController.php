@@ -19,7 +19,10 @@ class ProfileController extends Controller
     public function index(Request $request)
     {
         $data = User::where('uuid', auth()->user()->uuid)->first();
-        $companies = Company::get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->get();
 
         return view('profile.index', compact('data', 'companies'));
     }
@@ -57,7 +60,7 @@ class ProfileController extends Controller
             
             $params['is_active'] = $request->is_active ? 1 : 0;
             if(@$params['photo']) {
-                if(file_exists(public_path("uploads/users/photos/$data->photo"))) {
+                if(file_exists(public_path("uploads/users/photos/$data->photo") && $data->photo)) {
                     unlink(public_path("uploads/users/photos/$data->photo"));
                 }
                 $params['photo'] = upload($params['photo'], public_path('uploads/users/photos/'));

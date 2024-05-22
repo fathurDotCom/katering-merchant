@@ -28,7 +28,11 @@ class ProductController extends Controller
     }
     
     protected function json(Request $request) {
-        $data = Product::with('company', 'category')->orderByDesc('created_at')->get();
+        $data = Product::with('company', 'category')
+        ->when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('company_uuid', auth()->user()->company_uuid);
+        })
+        ->orderByDesc('created_at')->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -61,7 +65,10 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
         
         return view('product.create', compact('companies'));
     }
@@ -100,7 +107,7 @@ class ProductController extends Controller
 
             $product = Product::create($params);
 
-            foreach($request->images as $item) {
+            foreach($request->images ?? [] as $item) {
                 $image = upload($item, public_path('uploads/products/images/'));
                 
                 ProductImage::create([
@@ -139,7 +146,10 @@ class ProductController extends Controller
             return $this->imageJson($uuid);
         }
         $data = Product::where('uuid', $uuid)->first();
-        $companies = Company::orderBy('name')->get();
+        $companies = Company::when(auth()->user()->hasrole('merchant'), function($query) {
+            $query->where('uuid', auth()->user()->company_uuid);
+        })
+        ->orderBy('name')->get();
         $categories = Category::where('company_uuid', $data->company_uuid)->orderBy('name')->get();
         
         return view('product.edit', compact('data', 'companies', 'categories'));
@@ -183,7 +193,7 @@ class ProductController extends Controller
                 $item->delete();
             }
 
-            foreach($request->images as $item) {
+            foreach($request->images ?? [] as $item) {
                 $image = upload($item, public_path('uploads/products/images/'));
                 
                 ProductImage::create([

@@ -5,7 +5,7 @@
         <div class="aside-user d-flex align-items-sm-center justify-content-center py-5">
 
             <div class="symbol symbol-50px">
-                <img src="/assets/media/avatars/300-1.jpg" alt="" />
+                <img src="{{ auth()->user()->photo ? "/uploads/users/photos/".auth()->user()->photo : '/assets/media/avatars/300-1.jpg' }}" alt="" />
             </div>
 
             <div class="aside-user-info flex-row-fluid flex-wrap ms-5">
@@ -38,7 +38,7 @@
                                 <div class="menu-content d-flex align-items-center px-3">
 
                                     <div class="symbol symbol-50px me-5">
-                                        <img alt="Logo" src="/assets/media/avatars/300-1.jpg" />
+                                        <img src="{{ auth()->user()->photo ? "/uploads/users/photos/".auth()->user()->photo : '/assets/media/avatars/300-1.jpg' }}" alt="" />
                                     </div>
 
                                     <div class="d-flex flex-column">
