@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Http\Controllers\Controller;
-use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Customer;
 use App\Models\OrderDetail;
-use App\Models\OrderLog;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -28,11 +26,14 @@ class OrderController extends Controller
         return view('order.index');
     }
 
-    protected function json(Request $request) {
+    protected function json() {
         $data = Order::with('company', 'customer')->orderByDesc('created_at')->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
+            ->editColumn('customer.fullname', function ($data) {
+                return $data->customer->firstname . ' ' . $data->customer->lastname;
+            })
             ->editColumn('action', function ($data) {
                 $actionButton = '
                 <a href='.route("order.edit", ['uuid' => $data->uuid]).' data-bs-toggle="tooltip" data-bs-placement="top" title="edit">
@@ -146,7 +147,7 @@ class OrderController extends Controller
         $data = Order::where('uuid', $uuid)->first();
         $detail = OrderDetail::where('order_uuid', $uuid)->get();
         $companies = Company::orderBy('name')->get();
-        $customers = Customer::where('company_uuid', $data->company_uuid)->orderBy('name')->get();
+        $customers = User::role('user')->get();
         $products = Product::where('company_uuid', $data->company_uuid)->orderBy('name')->get();
 
         return view('order.edit', compact('data', 'detail', 'companies', 'customers', 'products'));
@@ -205,8 +206,9 @@ class OrderController extends Controller
                 $product = Product::where('uuid', $item)->first();
                 $orderParams['amount'] = $orderParams['amount'] + $product->price;
                 
-                $search = [
-                    'uuid' => $request->detail_order_uuid[$key],
+                
+                $search =  [
+                    'uuid' => $request->detail_order_uuid[$key] ?? null,
                 ];
                 
                 $temp = [

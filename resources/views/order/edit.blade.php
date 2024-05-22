@@ -71,7 +71,7 @@
                                                 <select class="form-select @error('customer_uuid') is-invalid @enderror" name="customer_uuid" id="customer_uuid" data-control="select2" data-placeholder="Select an option">
                                                     <option></option>
                                                     @foreach ($customers as $item)
-                                                        <option value="{{ $item->uuid }}" {{ $data->customer_uuid == $item->uuid ? 'selected' : null }}>{{ $item->name }}</option>
+                                                        <option value="{{ $item->uuid }}" {{ $data->customer_uuid == $item->uuid ? 'selected' : null }}>{{ $item->firstname . ' ' . $item->lastname }}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('customer_uuid')
@@ -160,7 +160,7 @@
                                                     <tr>
                                                         <td>
                                                             <input type="hidden" name="detail_order_uuid[]" value="{{ $item->uuid }}">
-                                                            <select class="form-select" name="product_uuid[]" data-control="select2" data-placeholder="Select an option">
+                                                            <select class="form-select product_select" name="product_uuid[0]" data-product-no="0" data-control="select2" data-placeholder="Select an option">
                                                                 <option></option>
                                                                 @foreach ($products as $item2)
                                                                     <option value="{{ $item2->uuid }}" {{ $item->product_uuid == $item2->uuid ? 'selected' : null }}>{{ $item2->name . ' - ' . $item2->price }}</option>
@@ -168,7 +168,7 @@
                                                             </select>
                                                         </td>
                                                         <td>
-                                                            <input type="number" class="form-control" name="sum[]" placeholder="order sum" value="{{ $item->sum }}">
+                                                            <input type="number" class="form-control sum_input" name="sum[0]" data-product-no="0" placeholder="order sum" value="{{ $item->sum }}">
                                                         </td>
                                                         <td>
                                                             <a href="#" class="btn-delete" data-bs-toggle="tooltip" data-bs-placement="top" title="delete">
@@ -201,6 +201,26 @@
 @push('script')
     <script>
         let products
+        let amount = 0
+        let productOrder = []
+        let productNo = 1
+        
+        $(document).ready((e) => {
+            
+            $('select.product_select').each(function() {
+                let no = $(this).data('product-no')
+                let price = $(this).find('option:selected').text().split(" - ")[1]
+                const sum = $(this).closest('tr').find('input.sum_input').val()
+                let value = price * sum
+                
+                productOrder.push({
+                    id: no,
+                    value: value
+                })
+            });            
+            
+            amountAccumulate()
+        })
         
         $(document).on('click', '#btn-add-product', () => {
 
@@ -216,14 +236,13 @@
 
                         let content = `<tr>
                             <td>
-                                <input type="hidden" name="detail_order_uuid[]" value="">
-                                <select class="form-select" name="product_uuid[]" data-control="select2" data-placeholder="Select an option">
+                                <select class="form-select product_select" name="product_uuid[${productNo}]" data-product-no="${productNo}" data-control="select2" data-placeholder="Select an option">
                                     <option></option>
                                     ${products}
                                 </select>
                             </td>
                             <td>
-                                <input type="number" class="form-control" name="sum[]" placeholder="order sum">
+                                <input type="number" class="form-control sum_input" name="sum[${productNo}]" data-product-no="${productNo}" placeholder="order sum" value="1">
                             </td>
                             <td>
                                 <a href="#" class="btn-delete" data-bs-toggle="tooltip" data-bs-placement="top" title="delete">
@@ -231,21 +250,22 @@
                                 </a>
                             </td>
                         </tr>`
-    
+                        
                         $('#list-product').append(content);
-                        $('select[name="product_uuid[]"]').select2()
+                        $(`select.product_select`).select2()
+                        productNo++
                     }
                 })
             } else {
                 let content = `<tr>
                     <td>
-                        <select class="form-select" name="product_uuid[]" data-control="select2" data-placeholder="Select an option">
+                        <select class="form-select product_select" name="product_uuid[${productNo}]" data-product-no="${productNo}" data-control="select2" data-placeholder="Select an option">
                             <option></option>
                             ${products}
                         </select>
                     </td>
                     <td>
-                        <input type="number" class="form-control" name="sum[]" placeholder="order sum">
+                        <input type="number" class="form-control sum_input" name="sum[${productNo}]" data-product-no="${productNo}" placeholder="order sum" value="1">
                     </td>
                     <td>
                         <a href="#" class="btn-delete" data-bs-toggle="tooltip" data-bs-placement="top" title="delete">
@@ -255,7 +275,8 @@
                 </tr>`
     
                 $('#list-product').append(content);
-                $('select[name="product_uuid[]"]').select2()
+                $(`select.product_select`).select2()
+                productNo++
             }
             
         })
@@ -297,6 +318,57 @@
                 }
             })
         })
+        
+        $(document).on('change', 'select.product_select', (e) => {
+            const self = $(e.currentTarget)
+            
+            const price = self.find('option:selected').text().split(" - ")[1]
+            const sum = self.closest('tr').find('input.sum_input').val()
+
+            let no = self.data('product-no')
+            let value = price * sum
+
+            let find = productOrder.find(obj => obj.id === no)
+
+            if (find) {
+                find.value = value
+            } else {
+                productOrder.push({
+                    id: no,
+                    value: value
+                })
+            }
+
+            amountAccumulate()
+        })
+
+        $(document).on('change', 'input.sum_input', (e) => {
+            const self = $(e.currentTarget)
+            
+            const price = self.val()
+            const sum = self.closest('tr').find('select.product_select option:selected').text().split(" - ")[1]
+
+            let no = self.data('product-no')
+            let value = price * sum
+
+            let find = productOrder.find(obj => obj.id === no)
+
+            if (find) {
+                find.value = value
+            } else {
+                productOrder.push({
+                    id: no,
+                    value: value
+                })
+            }
+
+            amountAccumulate()
+        })
+
+        function amountAccumulate() {
+            amount = productOrder.reduce((total, obj) => total + obj.value, 0)
+            $('input[name="amount"]').val(amount)
+        }
         
     </script>
 @endpush

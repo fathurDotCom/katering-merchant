@@ -20,7 +20,6 @@
                             </h3>
                             
                             <div class="card-toolbar">
-                                <a href="{{ route('customer.create') }}" class="btn btn-primary btn-sm">[+] Add New</a>
                             </div>
                         </div>
                         <!--end::Header-->
@@ -43,7 +42,6 @@
                                                     <th>Customer Name</th>
                                                     <th>Phone</th>
                                                     <th>Email</th>
-                                                    <th>Action</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -89,17 +87,13 @@
                     orderable: false,
                     searchable: false,
                 }, {
-                    data: "company.name",
+                    data: "company_name",
                 }, {
-                    data: "name",
+                    data: "fullname",
                 }, {
                     data: "phone",
                 }, {
                     data: "email",
-                }, {
-                    data: "action",
-                    orderable: false,
-                    searchable: false,
                 },
             ],
             bAutoWidth: false,
@@ -109,17 +103,5 @@
             }],
             bDestroy: true,
         });
-
-        $(document).on('click', '.btn-delete', (e) => {
-
-            appDelete(e, {
-                data: {
-                    _token: "{{ csrf_token() }}"
-                },
-                success: () => {
-                    table.ajax.reload()
-                }
-            })
-        })
     </script>
 @endpush

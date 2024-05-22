@@ -28,6 +28,6 @@ class Order extends Model
     
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_uuid', 'uuid');
+        return $this->belongsTo(User::class, 'customer_uuid', 'uuid');
     }
 }

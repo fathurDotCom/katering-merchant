@@ -2,17 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Branch;
-use App\Models\Brand;
 use App\Models\Category;
-use App\Models\City;
 use App\Models\Company;
-use App\Models\Country;
-use App\Models\Customer;
-use App\Models\District;
 use App\Models\Product;
-use App\Models\Province;
-use App\Models\Subdistrict;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MasterController extends Controller
@@ -38,11 +31,11 @@ class MasterController extends Controller
 
     public function customers(Request $request)
     {
-        $customers = Customer::where('company_uuid', $request->company_uuid)->orderBy('name')->get();
+        $customers = User::role('user')->get();
         
         $html = '<option></option>';
         foreach($customers as $item) {
-            $html .= '<option value="'.$item->uuid.'">'.$item->name.'</option>';
+            $html .= '<option value="'.$item->uuid.'">' . $item->firstname . ' '. $item->lastname . '</option>';
         }
 
         return $html;

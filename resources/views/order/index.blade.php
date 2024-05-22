@@ -94,7 +94,7 @@
                 }, {
                     data: "company.name",
                 }, {
-                    data: "customer.name",
+                    data: "customer.fullname",
                 }, {
                     data: "invoice",
                 }, {

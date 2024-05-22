@@ -127,7 +127,7 @@
                                                 <div class="fs-6 fw-semibold mt-2 mb-3">amount</div>
                                             </div>
                                             <div class="col-xl-9 fv-row fv-plugins-icon-container">
-                                                <input type="number" class="form-control @error('amount') is-invalid @enderror" name="amount" placeholder="example order amount">
+                                                <input type="number" class="form-control @error('amount') is-invalid @enderror" name="amount" placeholder="example order amount" readonly>
                                                 @error('amount')
                                                     <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -155,12 +155,12 @@
                                             <tbody id="list-product">
                                                 <tr>
                                                     <td>
-                                                        <select class="form-select" name="product_uuid[]" data-control="select2" data-placeholder="Select an option">
+                                                        <select class="form-select product_select" name="product_uuid[0]" data-product-no="0" data-control="select2" data-placeholder="Select an option">
                                                             <option></option>
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        <input type="number" class="form-control" name="sum[]" placeholder="order sum">
+                                                        <input type="number" class="form-control sum_input" name="sum[0]" data-product-no="0" placeholder="order sum" value="1">
                                                     </td>
                                                     <td>
                                                         <button type="button" href="#" class="btn btn-delete" data-bs-toggle="tooltip" data-bs-placement="top" title="delete">
@@ -192,17 +192,24 @@
 @push('script')
     <script>
         let products
+        let amount = 0
+        let productOrder = []
+        let productNo = 1
+
+        $(document).ready((e) => {
+            $('input[name="amount"]').val(amount)
+        })
 
         $(document).on('click', '#btn-add-product', () => {
             let content = `<tr>
                             <td>
-                                <select class="form-select" name="product_uuid[]" data-control="select2" data-placeholder="Select an option">
+                                <select class="form-select product_select" name="product_uuid[${productNo}]" data-product-no="${productNo}" data-control="select2" data-placeholder="Select an option">
                                     <option></option>
                                     ${products}
                                 </select>
                             </td>
                             <td>
-                                <input type="number" class="form-control" name="sum[]" placeholder="order sum">
+                                <input type="number" class="form-control sum_input" name="sum[${productNo}]" data-product-no="${productNo}" placeholder="order sum" value="1">
                             </td>
                             <td>
                                 <a href="#" class="btn-delete" data-bs-toggle="tooltip" data-bs-placement="top" title="delete">
@@ -213,7 +220,9 @@
 
             $('#list-product').append(content);
 
-            $('select[name="product_uuid[]"]').select2()
+            $(`select.product_select`).select2()
+
+            productNo++
         })
 
         $(document).on('click', '.btn-delete', (e) => {
@@ -248,11 +257,62 @@
                 success: (response) => {
                     products = response
 
-                    $('select[name="product_uuid[]"]').html(products)
+                    $('select.product_select').html(products)
                 }
             })
         })
-        
+
+        $(document).on('change', 'select.product_select', (e) => {
+            const self = $(e.currentTarget)
+            
+            const price = self.find('option:selected').text().split(" - ")[1]
+            const sum = self.closest('tr').find('input.sum_input').val()
+
+            let no = self.data('product-no')
+            let value = price * sum
+
+            let find = productOrder.find(obj => obj.id === no)
+
+            if (find) {
+                find.value = value
+            } else {
+                productOrder.push({
+                    id: no,
+                    value: value
+                })
+            }
+
+            amountAccumulate()
+        })
+
+        $(document).on('change', 'input.sum_input', (e) => {
+            const self = $(e.currentTarget)
+            
+            const price = self.val()
+            const sum = self.closest('tr').find('select.product_select option:selected').text().split(" - ")[1]
+
+            let no = self.data('product-no')
+            let value = price * sum
+
+            let find = productOrder.find(obj => obj.id === no)
+
+            if (find) {
+                find.value = value
+            } else {
+                productOrder.push({
+                    id: no,
+                    value: value
+                })
+            }
+
+            amountAccumulate()
+        })
+
+        function amountAccumulate() {
+            amount = productOrder.reduce((total, obj) => total + obj.value, 0)
+            $('input[name="amount"]').val(amount)
+        }
+
     </script>
 @endpush
 
