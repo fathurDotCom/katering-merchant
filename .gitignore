@@ -17,6 +17,12 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-/public/uploads/companies/logos/*
-/public/uploads/products/images/*
-/public/uploads/users/photos/*
+/public/uploads/companies/logos/*.jpg
+/public/uploads/companies/logos/*.jpeg
+/public/uploads/companies/logos/*.png
+/public/uploads/products/images/*.jpg
+/public/uploads/products/images/*.jpeg
+/public/uploads/products/images/*.png
+/public/uploads/users/photos/*.jpg
+/public/uploads/users/photos/*.jpeg
+/public/uploads/users/photos/*.png
